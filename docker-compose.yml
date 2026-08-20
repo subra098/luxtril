@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: luxtril-db
+    environment:
+      POSTGRES_DB: luxtril
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: bps
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d luxtril"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: luxtril-backend
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: luxtril
+      DB_USER: postgres
+      DB_PASSWORD: bps
+      JWT_SECRET: luxtril_secret_key_123456789_prod_env
+    ports:
+      - "5001:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backend_uploads:/usr/src/app/uploads
+
+  admin-panel:
+    build: ./admin-panel
+    container_name: luxtril-admin-panel
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_uploads:
