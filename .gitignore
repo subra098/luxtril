@@ -1,0 +1,14 @@
+# Ignore the mobile app directory as requested
+app/
+
+# Dependency directories at root level (if any)
+node_modules/
+
+# Local configuration / secrets
+.env
+.env.local
+.env.*.local
+
+# System files
+.DS_Store
+Thumbs.db

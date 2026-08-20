@@ -23,7 +23,7 @@ export default function Salons() {
 
   const fetchSalons = async () => {
     try {
-      const response = await api.get('/salons');
+      const response = await api.get('/admin/salons');
       setSalons(response.data.data.salons || []);
     } catch (error) {
       console.error('Error fetching salons:', error);
@@ -36,7 +36,7 @@ export default function Salons() {
     if (!confirm('Are you sure you want to approve this salon?')) return;
 
     try {
-      await api.put(`/admin/salons/${salonId}/approve`);
+      await api.put(`/admin/salons/${salonId}/approve`, { isApproved: true });
       alert('Salon approved successfully!');
       fetchSalons();
     } catch (error) {
@@ -53,6 +53,19 @@ export default function Salons() {
       fetchSalons();
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to reject salon');
+    }
+  };
+
+  const handleToggleStatus = async (salonId, currentActiveStatus) => {
+    const actionName = currentActiveStatus ? 'suspend' : 'activate';
+    if (!confirm(`Are you sure you want to ${actionName} this salon?`)) return;
+
+    try {
+      await api.put(`/admin/salons/${salonId}/status`, { isActive: !currentActiveStatus });
+      alert(`Salon ${actionName}ed successfully!`);
+      fetchSalons();
+    } catch (error) {
+      alert(error.response?.data?.message || `Failed to ${actionName} salon`);
     }
   };
 
@@ -181,6 +194,17 @@ export default function Salons() {
                           </>
                         )}
                       </span>
+                      {salon.isApproved && (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            salon.isActive
+                              ? 'bg-blue-500/20 text-blue-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
+                          {salon.isActive ? 'Active' : 'Suspended'}
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-400 text-sm">{salon.description || 'No description'}</p>
                   </div>
@@ -235,7 +259,7 @@ export default function Salons() {
                 </div>
 
                 {/* Action Buttons */}
-                {!salon.isApproved && (
+                {!salon.isApproved ? (
                   <div className="flex gap-3 mt-4">
                     <button
                       onClick={() => handleApprove(salon._id)}
@@ -250,6 +274,20 @@ export default function Salons() {
                     >
                       <MdCancel size={20} />
                       Reject Salon
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={() => handleToggleStatus(salon._id, salon.isActive)}
+                      className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-medium rounded-xl transition-all shadow-lg ${
+                        salon.isActive
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-orange-500/20'
+                          : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-blue-500/20'
+                      }`}
+                    >
+                      <MdCancel size={20} />
+                      {salon.isActive ? 'Suspend / Block Salon' : 'Reactivate / Unblock Salon'}
                     </button>
                   </div>
                 )}
