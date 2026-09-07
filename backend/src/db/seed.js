@@ -27,10 +27,10 @@ const seed = async () => {
       ['Demo Owner', 'owner@luxtril.com', ownerPassword, '8888888888', 'salon_owner']
     );
 
-    const clientPassword = await bcrypt.hash('client123', 12);
+    const clientPassword = await bcrypt.hash('TestPassword123', 12);
     const clientResult = await client.query(
       `INSERT INTO users (name, email, password, phone, role) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (email) DO NOTHING RETURNING id`,
-      ['Demo Client', 'client@luxtril.com', clientPassword, '7777777777', 'customer']
+      ['Demo Client', 'testuser@example.com', clientPassword, '7777777777', 'customer']
     );
 
     console.log('Users seeded');
@@ -98,7 +98,7 @@ const seed = async () => {
     console.log('\n--- Login Credentials ---');
     console.log('Admin:      admin@luxtril.com / admin123');
     console.log('Owner:      owner@luxtril.com / owner123');
-    console.log('Client:     client@luxtril.com / client123');
+    console.log('Client:     testuser@example.com / TestPassword123');
     console.log('-------------------------\n');
   } catch (err) {
     await client.query('ROLLBACK');

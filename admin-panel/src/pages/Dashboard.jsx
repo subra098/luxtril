@@ -26,9 +26,9 @@ export default function Dashboard() {
   const fetchStats = async () => {
     try {
       const [salonsRes, usersRes, bookingsRes] = await Promise.all([
-        api.get('/salons'),
+        api.get('/admin/salons'),
         api.get('/admin/users'),
-        api.get('/bookings'),
+        api.get('/admin/bookings'),
       ]);
 
       const salons = salonsRes.data.data.salons || [];

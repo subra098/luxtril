@@ -123,17 +123,75 @@ exports.forgotPassword = async (req, res) => {
     const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
 
     if (result.rows.length > 0) {
-      const crypto = require('crypto');
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const expires = new Date(Date.now() + 3600000);
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 3600000); // 1 hour
 
       await pool.query(
         'UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE email = $3',
-        [resetToken, expires, email]
+        [otp, expires, email]
       );
+      
+      const nodemailer = require('nodemailer');
+      let transporter;
+      let isTestAccount = false;
+
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+          }
+        });
+      } else {
+        // Fallback to Ethereal Test Account if no real credentials provided
+        const testAccount = await nodemailer.createTestAccount();
+        isTestAccount = true;
+        transporter = nodemailer.createTransport({
+          host: "smtp.ethereal.email",
+          port: 587,
+          secure: false, 
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
+          },
+        });
+      }
+
+      console.log(`\n==========================================`);
+      console.log(`🔒 FORGOT PASSWORD OTP GENERATED`);
+      console.log(`Email: ${email}`);
+      console.log(`OTP: ${otp}`);
+      console.log(`==========================================\n`);
+
+      try {
+        const info = await transporter.sendMail({
+          from: process.env.SMTP_USER ? `"Luxtril Support" <${process.env.SMTP_USER}>` : '"Luxtril Support" <test@luxtril.com>',
+          to: email,
+          subject: 'Luxtril - Password Reset OTP',
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+              <h2>Password Reset Request</h2>
+              <p>We received a request to reset your password. Use the following OTP to create a new password:</p>
+              <h1 style="color: #d4af37; letter-spacing: 5px; padding: 10px; background: #f8f8f8; display: inline-block; border-radius: 5px;">
+                ${otp}
+              </h1>
+              <p>This code will expire in 1 hour.</p>
+              <p>If you did not request this, please ignore this email.</p>
+            </div>
+          `
+        });
+        
+        console.log('OTP email sent successfully.');
+        if (isTestAccount) {
+          console.log(`\n📧 VIEW THE TEST EMAIL HERE: ${nodemailer.getTestMessageUrl(info)}\n`);
+        }
+      } catch (mailErr) {
+        console.error('Failed to send email:', mailErr);
+      }
     }
 
-    res.json({ success: true, message: 'If the email exists, a reset link has been sent' });
+    res.json({ success: true, message: 'If the email exists, an OTP has been sent' });
   } catch (err) {
     console.error('ForgotPassword error:', err);
     res.status(500).json({ success: false, message: 'Failed to process request' });
