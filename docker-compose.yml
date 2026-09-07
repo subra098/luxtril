@@ -31,7 +31,7 @@ services:
       DB_PASSWORD: bps
       JWT_SECRET: luxtril_secret_key_123456789_prod_env
     ports:
-      - "5001:5000"
+      - "5003:5000"
     depends_on:
       db:
         condition: service_healthy
@@ -42,7 +42,7 @@ services:
     build: ./admin-panel
     container_name: luxtril-admin-panel
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
       - backend
 
