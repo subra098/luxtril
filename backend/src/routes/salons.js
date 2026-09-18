@@ -9,6 +9,7 @@ router.get('/my-salon', authenticate, salonController.getMySalon);
 router.post('/', authenticate, upload.any(), salonController.createSalon);
 router.put('/my-salon', authenticate, upload.any(), salonController.updateMySalon);
 router.put('/slot-config', authenticate, salonController.updateSlotConfig);
+router.put('/working-hours', authenticate, salonController.updateWorkingHours);
 router.get('/:salonId', salonController.getSalonById);
 router.get('/:salonId/available-slots', salonController.getAvailableSlots);
 

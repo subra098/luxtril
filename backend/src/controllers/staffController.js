@@ -107,3 +107,68 @@ exports.deleteStaff = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to delete staff' });
   }
 };
+
+exports.getAvailableStaffForSlot = async (req, res) => {
+  try {
+    const { salonId, date, time } = req.query;
+
+    if (!salonId || !date || !time) {
+      return res.status(400).json({ success: false, message: 'salonId, date, and time are required' });
+    }
+
+    // Ensure time format is HH:MM
+    const timeStr = time.substring(0, 5);
+
+    // 1. Fetch all staff for this salon
+    const staffResult = await pool.query(
+      'SELECT id, name, role, profile_image, is_available FROM staff WHERE salon_id = $1 ORDER BY name',
+      [salonId]
+    );
+
+    if (staffResult.rows.length === 0) {
+      return res.json({ success: true, data: { staff: [] } });
+    }
+
+    // 2. Fetch bookings for this specific date and time
+    const bookingsResult = await pool.query(
+      "SELECT staff_id FROM bookings WHERE salon_id = $1 AND booking_date = $2 AND start_time::text LIKE $3 || '%' AND status NOT IN ('cancelled')",
+      [salonId, date, timeStr]
+    );
+
+    const bookedStaffIds = new Set(bookingsResult.rows.map(r => r.staff_id));
+
+    const staffWithAvailability = staffResult.rows.map(staff => {
+      const isBooked = bookedStaffIds.has(staff.id);
+      return {
+        ...staff,
+        isBooked,
+        isAvailableForSlot: staff.is_available && !isBooked
+      };
+    });
+
+    res.json({ success: true, data: { staff: staffWithAvailability } });
+  } catch (err) {
+    console.error('GetAvailableStaffForSlot error:', err);
+    res.status(500).json({ success: false, message: 'Failed to get available staff for slot' });
+  }
+};
+
+exports.getStaffServices = async (req, res) => {
+  try {
+    const { staffId } = req.params;
+
+    const result = await pool.query(
+      `SELECT s.* FROM services s
+       JOIN staff st ON st.salon_id = s.salon_id
+       WHERE st.id = $1 AND s.is_active = true
+       ORDER BY s.category, s.name`,
+      [staffId]
+    );
+
+    res.json({ success: true, data: { services: result.rows } });
+  } catch (err) {
+    console.error('GetStaffServices error:', err);
+    res.status(500).json({ success: false, message: 'Failed to get staff services' });
+  }
+};
+

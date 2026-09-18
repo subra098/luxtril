@@ -101,8 +101,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Luxtril API server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Luxtril API server running on port ${PORT} (Bound to 0.0.0.0 for external access)`);
 });
 
 module.exports = app;
