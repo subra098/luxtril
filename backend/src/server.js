@@ -8,7 +8,7 @@ const app = express();
 
 app.use(cors());
 
-// Middleware to recursively format PostgreSQL query rows for MongoDB and camelCase compatibility in frontend
+// Middleware to recursively format PostgreSQL query rows for MongoDB and camelCase compatibility in frontend ddjf
 function formatResponseObject(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) {
